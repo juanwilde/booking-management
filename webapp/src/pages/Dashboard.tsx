@@ -3,18 +3,18 @@ import { Link } from 'react-router-dom';
 import {
   DollarSign,
   TrendingUp,
-  TrendingDown,
   Calendar,
   Users,
   AlertCircle,
 } from 'lucide-react';
 import { StatCard } from '../components/common/Card';
 import { dashboardAPI, bookingsAPI } from '../services/api';
-import { format } from 'date-fns';
+import { translatePaymentStatus, formatDate } from '../utils/translations';
+import { DashboardStats, Booking } from '../types';
 
 export const Dashboard = () => {
-  const [stats, setStats] = useState(null);
-  const [upcomingBookings, setUpcomingBookings] = useState([]);
+  const [stats, setStats] = useState<DashboardStats | null>(null);
+  const [upcomingBookings, setUpcomingBookings] = useState<Booking[]>([]);
   const [loading, setLoading] = useState(true);
 
   useEffect(() => {
@@ -34,7 +34,7 @@ export const Dashboard = () => {
       // Get next 5 upcoming bookings
       const upcoming = bookingsData.data
         .filter(b => new Date(b.checkIn) >= new Date())
-        .sort((a, b) => new Date(a.checkIn) - new Date(b.checkIn))
+        .sort((a, b) => new Date(a.checkIn).getTime() - new Date(b.checkIn).getTime())
         .slice(0, 5);
 
       setUpcomingBookings(upcoming);
@@ -49,6 +49,14 @@ export const Dashboard = () => {
     return (
       <div className="flex items-center justify-center h-64">
         <div className="text-gray-600">Cargando...</div>
+      </div>
+    );
+  }
+
+  if (!stats) {
+    return (
+      <div className="flex items-center justify-center h-64">
+        <div className="text-gray-600">No se pudieron cargar las estadísticas</div>
       </div>
     );
   }
@@ -192,10 +200,10 @@ export const Dashboard = () => {
                       </div>
                     </td>
                     <td className="px-4 py-4 whitespace-nowrap text-sm text-gray-900">
-                      {format(new Date(booking.checkIn), 'MMM dd, yyyy')}
+                      {formatDate(booking.checkIn, 'MMM dd, yyyy')}
                     </td>
                     <td className="px-4 py-4 whitespace-nowrap text-sm text-gray-900">
-                      {format(new Date(booking.checkOut), 'MMM dd, yyyy')}
+                      {formatDate(booking.checkOut, 'MMM dd, yyyy')}
                     </td>
                     <td className="px-4 py-4 whitespace-nowrap text-sm text-gray-900">
                       <div className="flex items-center">
@@ -213,7 +221,7 @@ export const Dashboard = () => {
                             : 'bg-red-100 text-red-800'
                         }`}
                       >
-                        {booking.paymentStatus}
+                        {translatePaymentStatus(booking.paymentStatus)}
                       </span>
                     </td>
                     <td className="px-4 py-4 whitespace-nowrap text-sm font-medium text-gray-900">

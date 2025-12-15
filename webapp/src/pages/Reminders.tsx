@@ -1,11 +1,13 @@
 import { useState, useEffect } from 'react';
 import { Bell, CheckCircle, Calendar, DollarSign, Mail } from 'lucide-react';
-import { format, differenceInDays } from 'date-fns';
+import { differenceInDays } from 'date-fns';
 import { Button } from '../components/common/Button';
 import { remindersAPI } from '../services/api';
+import { formatDate } from '../utils/translations';
+import { PaymentReminder } from '../types';
 
 export const Reminders = () => {
-  const [reminders, setReminders] = useState([]);
+  const [reminders, setReminders] = useState<PaymentReminder[]>([]);
   const [loading, setLoading] = useState(true);
 
   useEffect(() => {
@@ -24,7 +26,7 @@ export const Reminders = () => {
     }
   };
 
-  const handleMarkCompleted = async id => {
+  const handleMarkCompleted = async (id: string) => {
     try {
       await remindersAPI.markAsCompleted(id);
       loadReminders();
@@ -33,11 +35,11 @@ export const Reminders = () => {
     }
   };
 
-  const getDaysUntilReminder = reminderDate => {
+  const getDaysUntilReminder = (reminderDate: string) => {
     return differenceInDays(new Date(reminderDate), new Date());
   };
 
-  const getUrgencyColor = reminderDate => {
+  const getUrgencyColor = (reminderDate: string) => {
     const days = getDaysUntilReminder(reminderDate);
     if (days < 0) return 'bg-red-100 border-red-300 text-red-800';
     if (days === 0) return 'bg-orange-100 border-orange-300 text-orange-800';
@@ -45,7 +47,7 @@ export const Reminders = () => {
     return 'bg-blue-100 border-blue-300 text-blue-800';
   };
 
-  const getUrgencyText = reminderDate => {
+  const getUrgencyText = (reminderDate: string) => {
     const days = getDaysUntilReminder(reminderDate);
     if (days < 0) return 'Vencido';
     if (days === 0) return 'Hoy';
@@ -106,7 +108,7 @@ export const Reminders = () => {
               <DollarSign className="w-6 h-6 text-yellow-600" />
             </div>
             <div className="ml-4">
-              <p className="text-sm font-medium text-gray-600">Monto Total Pendiente</p>
+              <p className="text-sm font-medium text-gray-600">Cantidad Total Pendiente</p>
               <p className="text-2xl font-bold text-gray-900">
                 €{pendingReminders.reduce((sum, r) => sum + r.amountDue, 0)}
               </p>
@@ -146,7 +148,7 @@ export const Reminders = () => {
         ) : (
           <div className="space-y-4">
             {pendingReminders
-              .sort((a, b) => new Date(a.reminderDate) - new Date(b.reminderDate))
+              .sort((a, b) => new Date(a.reminderDate).getTime() - new Date(b.reminderDate).getTime())
               .map(reminder => (
                 <div
                   key={reminder.id}
@@ -161,7 +163,7 @@ export const Reminders = () => {
                           {getUrgencyText(reminder.reminderDate)}
                         </span>
                         <span className="text-sm font-medium">
-                          Recordatorio: {format(new Date(reminder.reminderDate), 'MMM dd, yyyy')}
+                          Recordatorio: {formatDate(reminder.reminderDate, 'MMM dd, yyyy')}
                         </span>
                       </div>
 
@@ -177,13 +179,13 @@ export const Reminders = () => {
                         <div className="flex items-center">
                           <Calendar className="w-4 h-4 mr-2" />
                           <span>
-                            Entrada: {format(new Date(reminder.checkIn), 'MMM dd, yyyy')}
+                            Entrada: {formatDate(reminder.checkIn, 'MMM dd, yyyy')}
                           </span>
                         </div>
                         <div className="flex items-center">
                           <DollarSign className="w-4 h-4 mr-2" />
                           <span className="font-semibold">
-                            Monto Pendiente: €{reminder.amountDue}
+                            Cantidad Pendiente: €{reminder.amountDue}
                           </span>
                         </div>
                         <div className="flex items-center text-gray-600">
@@ -229,7 +231,7 @@ export const Reminders = () => {
                   <div>
                     <h4 className="font-medium text-gray-900">{reminder.guestName}</h4>
                     <p className="text-sm text-gray-600 mt-1">
-                      Entrada: {format(new Date(reminder.checkIn), 'MMM dd, yyyy')} •
+                      Entrada: {formatDate(reminder.checkIn, 'MMM dd, yyyy')} •
                       Cobrado: €{reminder.amountDue}
                     </p>
                   </div>

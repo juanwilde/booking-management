@@ -1,4 +1,4 @@
-import { useState } from 'react';
+import { useState, FormEvent } from 'react';
 import { useNavigate } from 'react-router-dom';
 import { useAuth } from '../context/AuthContext';
 import { Input } from '../components/common/Input';
@@ -12,7 +12,7 @@ export const Login = () => {
   const { login } = useAuth();
   const navigate = useNavigate();
 
-  const handleSubmit = async e => {
+  const handleSubmit = async (e: FormEvent<HTMLFormElement>) => {
     e.preventDefault();
     setError('');
     setLoading(true);
@@ -22,14 +22,14 @@ export const Login = () => {
     if (result.success) {
       navigate('/dashboard');
     } else {
-      setError(result.error);
+      setError(result.error || 'Error al iniciar sesión');
     }
 
     setLoading(false);
   };
 
   return (
-    <div className="min-h-screen flex items-center justify-center bg-gradient-to-br from-blue-50 to-indigo-100 px-4">
+    <div className="min-h-screen flex items-center justify-center bg-linear-to-br from-blue-50 to-indigo-100 px-4">
       <div className="max-w-md w-full bg-white rounded-lg shadow-xl p-8">
         <div className="text-center mb-8">
           <h1 className="text-3xl font-bold text-gray-900">Gestor de Reservas</h1>
@@ -70,8 +70,7 @@ export const Login = () => {
           <p className="text-sm font-medium text-gray-700 mb-2">Credenciales de Demostración:</p>
           <div className="space-y-1 text-xs text-gray-600">
             <p><strong>Administrador:</strong> admin@example.com / admin123</p>
-            <p><strong>Gerente:</strong> manager@example.com / manager123</p>
-            <p><strong>Personal:</strong> staff@example.com / staff123</p>
+            <p><strong>Gestión:</strong> manager@example.com / manager123</p>
           </div>
         </div>
       </div>

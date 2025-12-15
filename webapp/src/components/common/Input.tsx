@@ -1,10 +1,19 @@
+import { InputHTMLAttributes, SelectHTMLAttributes, TextareaHTMLAttributes, ReactNode } from 'react';
+
+interface InputProps extends InputHTMLAttributes<HTMLInputElement> {
+  label?: string;
+  error?: string;
+  className?: string;
+  containerClassName?: string;
+}
+
 export const Input = ({
   label,
   error,
   className = '',
   containerClassName = '',
   ...props
-}) => {
+}: InputProps) => {
   return (
     <div className={`${containerClassName}`}>
       {label && (
@@ -23,6 +32,14 @@ export const Input = ({
   );
 };
 
+interface SelectProps extends SelectHTMLAttributes<HTMLSelectElement> {
+  label?: string;
+  error?: string;
+  className?: string;
+  containerClassName?: string;
+  children: ReactNode;
+}
+
 export const Select = ({
   label,
   error,
@@ -30,7 +47,7 @@ export const Select = ({
   containerClassName = '',
   children,
   ...props
-}) => {
+}: SelectProps) => {
   return (
     <div className={`${containerClassName}`}>
       {label && (
@@ -51,13 +68,20 @@ export const Select = ({
   );
 };
 
+interface TextareaProps extends TextareaHTMLAttributes<HTMLTextAreaElement> {
+  label?: string;
+  error?: string;
+  className?: string;
+  containerClassName?: string;
+}
+
 export const Textarea = ({
   label,
   error,
   className = '',
   containerClassName = '',
   ...props
-}) => {
+}: TextareaProps) => {
   return (
     <div className={`${containerClassName}`}>
       {label && (

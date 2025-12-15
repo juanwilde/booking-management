@@ -1,9 +1,10 @@
 import { addDays, subDays, format } from 'date-fns';
+import { Booking, Expense, DashboardStats } from '../types';
 
 // Generate mock bookings
-export const mockBookings = [
+export const mockBookings: Booking[] = [
   {
-    id: 1,
+    id: '1',
     guestName: 'John Smith',
     guestEmail: 'john.smith@email.com',
     guestPhone: '+1 234-567-8901',
@@ -15,12 +16,11 @@ export const mockBookings = [
     paymentStatus: 'paid',
     paymentMethod: 'credit_card',
     status: 'confirmed',
-    propertyName: 'Casa do Barqueiro',
+    propertyName: 'Caiño',
     notes: 'Early check-in requested',
-    createdAt: format(subDays(new Date(), 10), 'yyyy-MM-dd'),
   },
   {
-    id: 2,
+    id: '2',
     guestName: 'Maria Garcia',
     guestEmail: 'maria.garcia@email.com',
     guestPhone: '+34 612-345-678',
@@ -32,12 +32,11 @@ export const mockBookings = [
     paymentStatus: 'pending',
     paymentMethod: 'credit_card',
     status: 'confirmed',
-    propertyName: 'Casa do Barqueiro',
+    propertyName: 'Loureira',
     notes: '',
-    createdAt: format(subDays(new Date(), 5), 'yyyy-MM-dd'),
   },
   {
-    id: 3,
+    id: '3',
     guestName: 'David Johnson',
     guestEmail: 'david.j@email.com',
     guestPhone: '+44 7700-900123',
@@ -49,12 +48,11 @@ export const mockBookings = [
     paymentStatus: 'paid',
     paymentMethod: 'bank_transfer',
     status: 'checked_in',
-    propertyName: 'Casa do Barqueiro',
+    propertyName: 'Treixadura',
     notes: 'Vegetarian guests',
-    createdAt: format(subDays(new Date(), 20), 'yyyy-MM-dd'),
   },
   {
-    id: 4,
+    id: '4',
     guestName: 'Sophie Martin',
     guestEmail: 'sophie.martin@email.com',
     guestPhone: '+33 6-12-34-56-78',
@@ -66,12 +64,11 @@ export const mockBookings = [
     paymentStatus: 'partial',
     paymentMethod: 'credit_card',
     status: 'confirmed',
-    propertyName: 'Casa do Barqueiro',
+    propertyName: 'Caiño',
     notes: 'Anniversary trip',
-    createdAt: format(subDays(new Date(), 2), 'yyyy-MM-dd'),
   },
   {
-    id: 5,
+    id: '5',
     guestName: 'Robert Brown',
     guestEmail: 'robert.brown@email.com',
     guestPhone: '+1 555-123-4567',
@@ -83,68 +80,81 @@ export const mockBookings = [
     paymentStatus: 'paid',
     paymentMethod: 'credit_card',
     status: 'completed',
-    propertyName: 'Casa do Barqueiro',
+    propertyName: 'Loureira',
     notes: '',
-    createdAt: format(subDays(new Date(), 30), 'yyyy-MM-dd'),
   },
 ];
 
 // Generate mock expenses
-export const mockExpenses = [
+export const mockExpenses: Expense[] = [
   {
-    id: 1,
+    id: '1',
     date: format(subDays(new Date(), 5), 'yyyy-MM-dd'),
     category: 'Maintenance',
-    description: 'Plumber service - kitchen sink repair',
+    description: 'Reparación de fontanería - fregadero de cocina',
     amount: 120,
     paymentMethod: 'cash',
-    vendor: 'Local Plumbing Co.',
+    vendor: 'Fontanería Local',
     status: 'paid',
   },
   {
-    id: 2,
+    id: '2',
     date: format(subDays(new Date(), 3), 'yyyy-MM-dd'),
-    category: 'Utilities',
-    description: 'Electricity bill - November',
+    category: 'Fees',
+    description: 'Comisión de plataforma - Booking.com',
     amount: 85,
     paymentMethod: 'bank_transfer',
-    vendor: 'Energy Company',
+    vendor: 'Booking.com',
     status: 'paid',
   },
   {
-    id: 3,
+    id: '3',
     date: format(subDays(new Date(), 2), 'yyyy-MM-dd'),
     category: 'Cleaning',
-    description: 'Professional deep cleaning',
+    description: 'Limpieza profunda profesional',
     amount: 150,
     paymentMethod: 'credit_card',
-    vendor: 'Clean & Shine Services',
+    vendor: 'Servicios de Limpieza',
     status: 'paid',
   },
   {
-    id: 4,
+    id: '4',
     date: format(subDays(new Date(), 1), 'yyyy-MM-dd'),
-    category: 'Supplies',
-    description: 'Linens and towels replacement',
+    category: 'BedSheets',
+    description: 'Sábanas y toallas nuevas',
     amount: 280,
     paymentMethod: 'credit_card',
-    vendor: 'Home Essentials Store',
+    vendor: 'Tienda de Ropa de Hogar',
     status: 'pending',
   },
   {
-    id: 5,
+    id: '5',
     date: format(new Date(), 'yyyy-MM-dd'),
-    category: 'Utilities',
-    description: 'Water bill - November',
+    category: 'Supplies',
+    description: 'Productos de limpieza y amenidades',
     amount: 45,
     paymentMethod: 'bank_transfer',
-    vendor: 'Water Utility',
+    vendor: 'Proveedor de Suministros',
     status: 'pending',
   },
 ];
 
+interface PaymentReminder {
+  id: string;
+  bookingId: string;
+  guestName: string;
+  guestEmail: string;
+  checkIn: string;
+  reminderDate: string;
+  amountDue: number;
+  totalAmount: number;
+  status: string;
+  type: string;
+  message: string;
+}
+
 // Generate reminders based on bookings (5 days before check-in for unpaid/partial)
-export const generateReminders = () => {
+export const generateReminders = (): PaymentReminder[] => {
   return mockBookings
     .filter(booking => {
       const checkInDate = new Date(booking.checkIn);
@@ -154,7 +164,7 @@ export const generateReminders = () => {
       // Include if reminder date is within +/- 10 days and payment is not complete
       return (
         (booking.paymentStatus === 'pending' || booking.paymentStatus === 'partial') &&
-        Math.abs(reminderDate - today) / (1000 * 60 * 60 * 24) <= 10
+        Math.abs(reminderDate.getTime() - today.getTime()) / (1000 * 60 * 60 * 24) <= 10
       );
     })
     .map(booking => ({
@@ -175,7 +185,7 @@ export const generateReminders = () => {
 export const mockReminders = generateReminders();
 
 // Stats calculation
-export const calculateStats = () => {
+export const calculateStats = (): DashboardStats => {
   const totalRevenue = mockBookings.reduce((sum, b) => sum + b.paidAmount, 0);
   const totalExpenses = mockExpenses.filter(e => e.status === 'paid').reduce((sum, e) => sum + e.amount, 0);
   const pendingPayments = mockBookings

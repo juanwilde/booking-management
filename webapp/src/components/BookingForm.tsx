@@ -1,11 +1,20 @@
-import { useState, useEffect } from 'react';
+import { useState, useEffect, ChangeEvent, FormEvent } from 'react';
 import { Button } from './common/Button';
 import { Input, Select, Textarea } from './common/Input';
 import { bookingsAPI } from '../services/api';
-import { format } from 'date-fns';
+import { Booking } from '../types';
 
-export const BookingForm = ({ booking, onSave, onCancel }) => {
-  const [formData, setFormData] = useState({
+interface BookingFormProps {
+  booking: Booking | null;
+  onSave: () => void;
+  onCancel: () => void;
+}
+
+type BookingFormData = Omit<Booking, 'id'>;
+type FormErrors = Partial<Record<keyof BookingFormData, string>>;
+
+export const BookingForm = ({ booking, onSave, onCancel }: BookingFormProps) => {
+  const [formData, setFormData] = useState<BookingFormData>({
     guestName: '',
     guestEmail: '',
     guestPhone: '',
@@ -17,11 +26,11 @@ export const BookingForm = ({ booking, onSave, onCancel }) => {
     paymentStatus: 'pending',
     paymentMethod: 'credit_card',
     status: 'confirmed',
-    propertyName: 'Casa do Barqueiro',
+    propertyName: 'Caiño',
     notes: '',
   });
   const [loading, setLoading] = useState(false);
-  const [errors, setErrors] = useState({});
+  const [errors, setErrors] = useState<FormErrors>({});
 
   useEffect(() => {
     if (booking) {
@@ -29,7 +38,7 @@ export const BookingForm = ({ booking, onSave, onCancel }) => {
     }
   }, [booking]);
 
-  const handleChange = e => {
+  const handleChange = (e: ChangeEvent<HTMLInputElement | HTMLSelectElement | HTMLTextAreaElement>) => {
     const { name, value } = e.target;
     setFormData(prev => ({
       ...prev,
@@ -37,13 +46,13 @@ export const BookingForm = ({ booking, onSave, onCancel }) => {
     }));
 
     // Clear error for this field
-    if (errors[name]) {
+    if (errors[name as keyof BookingFormData]) {
       setErrors(prev => ({ ...prev, [name]: '' }));
     }
   };
 
-  const validate = () => {
-    const newErrors = {};
+  const validate = (): boolean => {
+    const newErrors: FormErrors = {};
 
     if (!formData.guestName.trim()) newErrors.guestName = 'El nombre del huésped es obligatorio';
     if (!formData.guestEmail.trim()) newErrors.guestEmail = 'El correo electrónico es obligatorio';
@@ -62,7 +71,7 @@ export const BookingForm = ({ booking, onSave, onCancel }) => {
     return Object.keys(newErrors).length === 0;
   };
 
-  const handleSubmit = async e => {
+  const handleSubmit = async (e: FormEvent<HTMLFormElement>) => {
     e.preventDefault();
 
     if (!validate()) return;
@@ -111,7 +120,7 @@ export const BookingForm = ({ booking, onSave, onCancel }) => {
           type="tel"
           value={formData.guestPhone}
           onChange={handleChange}
-          placeholder="+34 123-456-789"
+          placeholder="+34 600 111 222"
         />
 
         <Input
@@ -154,7 +163,7 @@ export const BookingForm = ({ booking, onSave, onCancel }) => {
         />
 
         <Input
-          label="Monto Pagado (€)"
+          label="Cantidad Pagada (€)"
           name="paidAmount"
           type="number"
           min="0"
@@ -197,12 +206,16 @@ export const BookingForm = ({ booking, onSave, onCancel }) => {
           <option value="cancelled">Cancelada</option>
         </Select>
 
-        <Input
-          label="Nombre de Propiedad"
+        <Select
+          label="Propiedad"
           name="propertyName"
           value={formData.propertyName}
           onChange={handleChange}
-        />
+        >
+          <option value="Caiño">Caiño</option>
+          <option value="Loureira">Loureira</option>
+          <option value="Treixadura">Treixadura</option>
+        </Select>
       </div>
 
       <Textarea
@@ -210,7 +223,7 @@ export const BookingForm = ({ booking, onSave, onCancel }) => {
         name="notes"
         value={formData.notes}
         onChange={handleChange}
-        rows="3"
+        rows={3}
         placeholder="Cualquier solicitud especial o notas..."
       />
 

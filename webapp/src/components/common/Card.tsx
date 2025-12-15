@@ -1,4 +1,14 @@
-export const Card = ({ children, className = '', title, action }) => {
+import { ReactNode } from 'react';
+import { LucideIcon } from 'lucide-react';
+
+interface CardProps {
+  children: ReactNode;
+  className?: string;
+  title?: string;
+  action?: ReactNode;
+}
+
+export const Card = ({ children, className = '', title, action }: CardProps) => {
   return (
     <div className={`bg-white rounded-lg shadow-md ${className}`}>
       {title && (
@@ -12,7 +22,19 @@ export const Card = ({ children, className = '', title, action }) => {
   );
 };
 
-export const StatCard = ({ title, value, subtitle, icon: Icon, trend }) => {
+interface StatCardProps {
+  title: string;
+  value: string | number;
+  subtitle?: string;
+  icon?: LucideIcon;
+  trend?: {
+    direction: 'up' | 'down';
+    value: string;
+    label: string;
+  };
+}
+
+export const StatCard = ({ title, value, subtitle, icon: Icon, trend }: StatCardProps) => {
   return (
     <div className="bg-white rounded-lg shadow-md p-6">
       <div className="flex items-center justify-between">

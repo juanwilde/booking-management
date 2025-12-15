@@ -1,23 +1,24 @@
 import { useState, useEffect } from 'react';
-import { Plus, Search, Filter, Edit, Trash2, Eye } from 'lucide-react';
-import { format } from 'date-fns';
+import { Plus, Edit, Trash2, Eye } from 'lucide-react';
 import { Button } from '../components/common/Button';
 import { Input, Select } from '../components/common/Input';
 import { Modal } from '../components/common/Modal';
 import { bookingsAPI } from '../services/api';
 import { BookingForm } from '../components/BookingForm';
+import { translateBookingStatus, translatePaymentStatus, translatePaymentMethod, formatDate } from '../utils/translations';
+import { Booking } from '../types';
 
 export const Bookings = () => {
-  const [bookings, setBookings] = useState([]);
-  const [filteredBookings, setFilteredBookings] = useState([]);
+  const [bookings, setBookings] = useState<Booking[]>([]);
+  const [filteredBookings, setFilteredBookings] = useState<Booking[]>([]);
   const [loading, setLoading] = useState(true);
   const [searchTerm, setSearchTerm] = useState('');
   const [statusFilter, setStatusFilter] = useState('');
   const [paymentFilter, setPaymentFilter] = useState('');
   const [modalOpen, setModalOpen] = useState(false);
   const [viewModalOpen, setViewModalOpen] = useState(false);
-  const [editingBooking, setEditingBooking] = useState(null);
-  const [viewingBooking, setViewingBooking] = useState(null);
+  const [editingBooking, setEditingBooking] = useState<Booking | null>(null);
+  const [viewingBooking, setViewingBooking] = useState<Booking | null>(null);
 
   useEffect(() => {
     loadBookings();
@@ -67,17 +68,17 @@ export const Bookings = () => {
     setModalOpen(true);
   };
 
-  const handleEditBooking = booking => {
+  const handleEditBooking = (booking: Booking) => {
     setEditingBooking(booking);
     setModalOpen(true);
   };
 
-  const handleViewBooking = booking => {
+  const handleViewBooking = (booking: Booking) => {
     setViewingBooking(booking);
     setViewModalOpen(true);
   };
 
-  const handleDeleteBooking = async id => {
+  const handleDeleteBooking = async (id: string) => {
     if (window.confirm('¿Estás seguro de que quieres eliminar esta reserva?')) {
       try {
         await bookingsAPI.delete(id);
@@ -93,8 +94,8 @@ export const Bookings = () => {
     loadBookings();
   };
 
-  const getStatusBadge = status => {
-    const badges = {
+  const getStatusBadge = (status: string) => {
+    const badges: Record<string, string> = {
       confirmed: 'bg-blue-100 text-blue-800',
       checked_in: 'bg-green-100 text-green-800',
       completed: 'bg-gray-100 text-gray-800',
@@ -103,8 +104,8 @@ export const Bookings = () => {
     return badges[status] || 'bg-gray-100 text-gray-800';
   };
 
-  const getPaymentBadge = status => {
-    const badges = {
+  const getPaymentBadge = (status: string) => {
+    const badges: Record<string, string> = {
       paid: 'bg-green-100 text-green-800',
       partial: 'bg-yellow-100 text-yellow-800',
       pending: 'bg-red-100 text-red-800',
@@ -184,6 +185,9 @@ export const Bookings = () => {
                   Huésped
                 </th>
                 <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
+                  Propiedad
+                </th>
+                <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
                   Entrada / Salida
                 </th>
                 <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
@@ -206,7 +210,7 @@ export const Bookings = () => {
             <tbody className="bg-white divide-y divide-gray-200">
               {filteredBookings.length === 0 ? (
                 <tr>
-                  <td colSpan="7" className="px-6 py-12 text-center text-gray-500">
+                  <td colSpan={8} className="px-6 py-12 text-center text-gray-500">
                     No se encontraron reservas
                   </td>
                 </tr>
@@ -222,11 +226,16 @@ export const Bookings = () => {
                       </div>
                     </td>
                     <td className="px-6 py-4 whitespace-nowrap">
+                      <div className="text-sm font-medium text-gray-900">
+                        {booking.propertyName}
+                      </div>
+                    </td>
+                    <td className="px-6 py-4 whitespace-nowrap">
                       <div className="text-sm text-gray-900">
-                        {format(new Date(booking.checkIn), 'MMM dd, yyyy')}
+                        {formatDate(booking.checkIn, 'MMM dd, yyyy')}
                       </div>
                       <div className="text-sm text-gray-500">
-                        {format(new Date(booking.checkOut), 'MMM dd, yyyy')}
+                        {formatDate(booking.checkOut, 'MMM dd, yyyy')}
                       </div>
                     </td>
                     <td className="px-6 py-4 whitespace-nowrap text-sm text-gray-900">
@@ -238,7 +247,7 @@ export const Bookings = () => {
                           booking.status
                         )}`}
                       >
-                        {booking.status.replace('_', ' ')}
+                        {translateBookingStatus(booking.status)}
                       </span>
                     </td>
                     <td className="px-6 py-4 whitespace-nowrap">
@@ -247,7 +256,7 @@ export const Bookings = () => {
                           booking.paymentStatus
                         )}`}
                       >
-                        {booking.paymentStatus}
+                        {translatePaymentStatus(booking.paymentStatus)}
                       </span>
                       <div className="text-xs text-gray-500 mt-1">
                         €{booking.paidAmount} / €{booking.totalPrice}
@@ -332,13 +341,13 @@ export const Bookings = () => {
               <div>
                 <label className="text-sm font-medium text-gray-700">Entrada</label>
                 <p className="mt-1 text-sm text-gray-900">
-                  {format(new Date(viewingBooking.checkIn), 'MMMM dd, yyyy')}
+                  {formatDate(viewingBooking.checkIn, 'MMMM dd, yyyy')}
                 </p>
               </div>
               <div>
                 <label className="text-sm font-medium text-gray-700">Salida</label>
                 <p className="mt-1 text-sm text-gray-900">
-                  {format(new Date(viewingBooking.checkOut), 'MMMM dd, yyyy')}
+                  {formatDate(viewingBooking.checkOut, 'MMMM dd, yyyy')}
                 </p>
               </div>
               <div>
@@ -349,7 +358,7 @@ export const Bookings = () => {
                       viewingBooking.status
                     )}`}
                   >
-                    {viewingBooking.status.replace('_', ' ')}
+                    {translateBookingStatus(viewingBooking.status)}
                   </span>
                 </p>
               </div>
@@ -361,7 +370,7 @@ export const Bookings = () => {
                       viewingBooking.paymentStatus
                     )}`}
                   >
-                    {viewingBooking.paymentStatus}
+                    {translatePaymentStatus(viewingBooking.paymentStatus)}
                   </span>
                 </p>
               </div>
@@ -370,13 +379,13 @@ export const Bookings = () => {
                 <p className="mt-1 text-sm text-gray-900">€{viewingBooking.totalPrice}</p>
               </div>
               <div>
-                <label className="text-sm font-medium text-gray-700">Monto Pagado</label>
+                <label className="text-sm font-medium text-gray-700">Cantidad Pagada</label>
                 <p className="mt-1 text-sm text-gray-900">€{viewingBooking.paidAmount}</p>
               </div>
               <div>
                 <label className="text-sm font-medium text-gray-700">Método de Pago</label>
-                <p className="mt-1 text-sm text-gray-900 capitalize">
-                  {viewingBooking.paymentMethod.replace('_', ' ')}
+                <p className="mt-1 text-sm text-gray-900">
+                  {translatePaymentMethod(viewingBooking.paymentMethod)}
                 </p>
               </div>
               <div>

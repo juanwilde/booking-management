@@ -1,12 +1,22 @@
-import { useState, useEffect } from 'react';
+import { useState, useEffect, ChangeEvent, FormEvent } from 'react';
 import { Button } from './common/Button';
 import { Input, Select, Textarea } from './common/Input';
 import { expensesAPI } from '../services/api';
+import { Expense, ExpenseCategory } from '../types';
 
-export const ExpenseForm = ({ expense, onSave, onCancel }) => {
-  const [formData, setFormData] = useState({
-    date: new Date().toISOString().split('T')[0],
-    category: 'Maintenance',
+interface ExpenseFormProps {
+  expense: Expense | null;
+  onSave: () => void;
+  onCancel: () => void;
+}
+
+type ExpenseFormData = Omit<Expense, 'id'>;
+type FormErrors = Partial<Record<keyof ExpenseFormData, string>>;
+
+export const ExpenseForm = ({ expense, onSave, onCancel }: ExpenseFormProps) => {
+  const [formData, setFormData] = useState<ExpenseFormData>({
+    date: new Date().toISOString().split('T')[0] || '',
+    category: 'Cleaning' as ExpenseCategory,
     description: '',
     amount: 0,
     paymentMethod: 'cash',
@@ -14,7 +24,7 @@ export const ExpenseForm = ({ expense, onSave, onCancel }) => {
     status: 'pending',
   });
   const [loading, setLoading] = useState(false);
-  const [errors, setErrors] = useState({});
+  const [errors, setErrors] = useState<FormErrors>({});
 
   useEffect(() => {
     if (expense) {
@@ -22,7 +32,7 @@ export const ExpenseForm = ({ expense, onSave, onCancel }) => {
     }
   }, [expense]);
 
-  const handleChange = e => {
+  const handleChange = (e: ChangeEvent<HTMLInputElement | HTMLSelectElement | HTMLTextAreaElement>) => {
     const { name, value } = e.target;
     setFormData(prev => ({
       ...prev,
@@ -30,24 +40,24 @@ export const ExpenseForm = ({ expense, onSave, onCancel }) => {
     }));
 
     // Clear error for this field
-    if (errors[name]) {
+    if (errors[name as keyof ExpenseFormData]) {
       setErrors(prev => ({ ...prev, [name]: '' }));
     }
   };
 
-  const validate = () => {
-    const newErrors = {};
+  const validate = (): boolean => {
+    const newErrors: FormErrors = {};
 
     if (!formData.date) newErrors.date = 'La fecha es obligatoria';
     if (!formData.description.trim()) newErrors.description = 'La descripción es obligatoria';
     if (!formData.vendor.trim()) newErrors.vendor = 'El proveedor es obligatorio';
-    if (formData.amount <= 0) newErrors.amount = 'El monto debe ser mayor que 0';
+    if (formData.amount <= 0) newErrors.amount = 'La cantidad debe ser mayor que 0';
 
     setErrors(newErrors);
     return Object.keys(newErrors).length === 0;
   };
 
-  const handleSubmit = async e => {
+  const handleSubmit = async (e: FormEvent<HTMLFormElement>) => {
     e.preventDefault();
 
     if (!validate()) return;
@@ -86,11 +96,12 @@ export const ExpenseForm = ({ expense, onSave, onCancel }) => {
           value={formData.category}
           onChange={handleChange}
         >
-          <option value="Maintenance">Mantenimiento</option>
-          <option value="Utilities">Servicios Públicos</option>
           <option value="Cleaning">Limpieza</option>
+          <option value="Maintenance">Mantenimiento</option>
+          <option value="Fees">Comisiones</option>
           <option value="Supplies">Suministros</option>
-          <option value="Other">Otro</option>
+          <option value="BedSheets">Ropa de Cama</option>
+          <option value="Others">Otros</option>
         </Select>
 
         <Input
@@ -103,7 +114,7 @@ export const ExpenseForm = ({ expense, onSave, onCancel }) => {
         />
 
         <Input
-          label="Monto (€) *"
+          label="Cantidad (€) *"
           name="amount"
           type="number"
           min="0"
@@ -141,7 +152,7 @@ export const ExpenseForm = ({ expense, onSave, onCancel }) => {
         value={formData.description}
         onChange={handleChange}
         error={errors.description}
-        rows="3"
+        rows={3}
         placeholder="Describe el gasto..."
       />
 

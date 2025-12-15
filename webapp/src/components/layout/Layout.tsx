@@ -1,4 +1,4 @@
-import { useState } from 'react';
+import { useState, ReactNode } from 'react';
 import { Link, useLocation, useNavigate } from 'react-router-dom';
 import {
   LayoutDashboard,
@@ -8,21 +8,38 @@ import {
   LogOut,
   Menu,
   X,
+  LucideIcon,
 } from 'lucide-react';
 import { useAuth } from '../../context/AuthContext';
 
-export const Layout = ({ children }) => {
+interface LayoutProps {
+  children: ReactNode;
+}
+
+interface NavigationItem {
+  name: string;
+  href: string;
+  icon: LucideIcon;
+  roles?: string[]; // Optional: if not specified, available to all roles
+}
+
+export const Layout = ({ children }: LayoutProps) => {
   const [sidebarOpen, setSidebarOpen] = useState(false);
   const location = useLocation();
   const navigate = useNavigate();
   const { user, logout } = useAuth();
 
-  const navigation = [
-    { name: 'Panel de Control', href: '/dashboard', icon: LayoutDashboard },
-    { name: 'Reservas', href: '/bookings', icon: Calendar },
-    { name: 'Gastos', href: '/expenses', icon: DollarSign },
-    { name: 'Recordatorios', href: '/reminders', icon: Bell },
+  const allNavigation: NavigationItem[] = [
+    { name: 'Panel de Control', href: '/dashboard', icon: LayoutDashboard, roles: ['admin'] },
+    { name: 'Reservas', href: '/bookings', icon: Calendar }, // Available to all roles
+    { name: 'Gastos', href: '/expenses', icon: DollarSign, roles: ['admin'] },
+    { name: 'Recordatorios', href: '/reminders', icon: Bell, roles: ['admin'] },
   ];
+
+  // Filter navigation based on user role
+  const navigation = allNavigation.filter(
+    item => !item.roles || item.roles.includes(user?.role || '')
+  );
 
   const handleLogout = () => {
     logout();
