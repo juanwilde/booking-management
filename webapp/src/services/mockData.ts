@@ -1,5 +1,5 @@
 import { addDays, subDays, format } from 'date-fns';
-import { Booking, Expense, DashboardStats } from '../types';
+import { Booking, Expense, DashboardStats, Manager } from '../types';
 
 // Generate mock bookings
 export const mockBookings: Booking[] = [
@@ -184,21 +184,68 @@ export const generateReminders = (): PaymentReminder[] => {
 
 export const mockReminders = generateReminders();
 
-// Stats calculation
-export const calculateStats = (): DashboardStats => {
-  const totalRevenue = mockBookings.reduce((sum, b) => sum + b.paidAmount, 0);
-  const totalExpenses = mockExpenses.filter(e => e.status === 'paid').reduce((sum, e) => sum + e.amount, 0);
-  const pendingPayments = mockBookings
+// Stats calculation with optional filters
+interface StatsFilters {
+  propertyName?: string;
+  startDate?: string;
+  endDate?: string;
+}
+
+export const calculateStats = (filters?: StatsFilters): DashboardStats => {
+  // Filter bookings based on date range and property
+  let filteredBookings = [...mockBookings];
+  let filteredExpenses = [...mockExpenses];
+
+  if (filters?.startDate) {
+    filteredBookings = filteredBookings.filter(b => b.checkIn >= filters.startDate!);
+  }
+  if (filters?.endDate) {
+    filteredBookings = filteredBookings.filter(b => b.checkIn <= filters.endDate!);
+  }
+  if (filters?.propertyName) {
+    filteredBookings = filteredBookings.filter(b => b.propertyName === filters.propertyName);
+  }
+
+  // For expenses, we don't have property association in the current data model
+  // So we'll filter them based on date only
+  if (filters?.startDate) {
+    filteredExpenses = filteredExpenses.filter(e => e.date >= filters.startDate!);
+  }
+  if (filters?.endDate) {
+    filteredExpenses = filteredExpenses.filter(e => e.date <= filters.endDate!);
+  }
+
+  const totalRevenue = filteredBookings.reduce((sum, b) => sum + b.paidAmount, 0);
+  const totalExpenses = filteredExpenses.filter(e => e.status === 'paid').reduce((sum, e) => sum + e.amount, 0);
+  const pendingPayments = filteredBookings
     .filter(b => b.paymentStatus !== 'paid')
     .reduce((sum, b) => sum + (b.totalPrice - b.paidAmount), 0);
 
   const today = new Date();
-  const upcomingBookings = mockBookings.filter(b => {
+  const upcomingBookings = filteredBookings.filter(b => {
     const checkIn = new Date(b.checkIn);
     return checkIn >= today && b.status !== 'cancelled' && b.status !== 'completed';
   }).length;
 
-  const activeBookings = mockBookings.filter(b => b.status === 'checked_in').length;
+  const activeBookings = filteredBookings.filter(b => b.status === 'checked_in').length;
+
+  // Calculate per-property metrics
+  const properties = ['Caiño', 'Loureira', 'Treixadura'];
+  const propertyMetrics = properties.map(propertyName => {
+    const propertyBookings = filteredBookings.filter(b => b.propertyName === propertyName);
+    const income = propertyBookings.reduce((sum, b) => sum + b.paidAmount, 0);
+
+    // For expenses, divide equally among all properties for now
+    // In a real system, expenses would be associated with specific properties
+    const expenses = totalExpenses / properties.length;
+
+    return {
+      propertyName,
+      income,
+      expenses,
+      profit: income - expenses,
+    };
+  });
 
   return {
     totalRevenue,
@@ -207,7 +254,20 @@ export const calculateStats = (): DashboardStats => {
     pendingPayments,
     upcomingBookings,
     activeBookings,
-    totalBookings: mockBookings.length,
+    totalBookings: filteredBookings.length,
     occupancyRate: 75, // Mock occupancy rate
+    propertyMetrics,
   };
 };
+
+// Mock managers (password is stored for demo purposes only)
+export const mockManagers: Manager[] = [
+  {
+    id: '1',
+    email: 'manager@example.com',
+    name: 'Manager User',
+    role: 'manager',
+    password: 'manager123',
+    createdAt: format(subDays(new Date(), 30), 'yyyy-MM-dd'),
+  },
+];

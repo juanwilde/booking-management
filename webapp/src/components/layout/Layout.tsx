@@ -5,12 +5,14 @@ import {
   Calendar,
   DollarSign,
   Bell,
+  Users,
   LogOut,
   Menu,
   X,
   LucideIcon,
 } from 'lucide-react';
 import { useAuth } from '../../context/AuthContext';
+import { ChangePasswordModal } from '../ChangePasswordModal';
 
 interface LayoutProps {
   children: ReactNode;
@@ -25,15 +27,17 @@ interface NavigationItem {
 
 export const Layout = ({ children }: LayoutProps) => {
   const [sidebarOpen, setSidebarOpen] = useState(false);
+  const [changePasswordModalOpen, setChangePasswordModalOpen] = useState(false);
   const location = useLocation();
   const navigate = useNavigate();
-  const { user, logout } = useAuth();
+  const { user, logout, changePassword } = useAuth();
 
   const allNavigation: NavigationItem[] = [
     { name: 'Panel de Control', href: '/dashboard', icon: LayoutDashboard, roles: ['admin'] },
     { name: 'Reservas', href: '/bookings', icon: Calendar }, // Available to all roles
     { name: 'Gastos', href: '/expenses', icon: DollarSign, roles: ['admin'] },
     { name: 'Recordatorios', href: '/reminders', icon: Bell, roles: ['admin'] },
+    { name: 'Gestores', href: '/users', icon: Users, roles: ['admin'] },
   ];
 
   // Filter navigation based on user role
@@ -44,6 +48,10 @@ export const Layout = ({ children }: LayoutProps) => {
   const handleLogout = () => {
     logout();
     navigate('/login');
+  };
+
+  const handlePasswordChange = async (currentPassword: string, newPassword: string) => {
+    await changePassword(currentPassword, newPassword);
   };
 
   return (
@@ -100,17 +108,20 @@ export const Layout = ({ children }: LayoutProps) => {
 
           {/* User info & logout */}
           <div className="p-4 border-t border-gray-200">
-            <div className="flex items-center mb-3">
+            <button
+              onClick={() => setChangePasswordModalOpen(true)}
+              className="flex items-center mb-3 w-full hover:bg-gray-50 p-2 rounded-lg transition-colors"
+            >
               <div className="flex-shrink-0">
                 <div className="w-10 h-10 rounded-full bg-blue-600 flex items-center justify-center text-white font-semibold">
                   {user?.name?.charAt(0) || 'U'}
                 </div>
               </div>
-              <div className="ml-3 flex-1">
+              <div className="ml-3 flex-1 text-left">
                 <p className="text-sm font-medium text-gray-900">{user?.name}</p>
                 <p className="text-xs text-gray-500 capitalize">{user?.role}</p>
               </div>
-            </div>
+            </button>
             <button
               onClick={handleLogout}
               className="flex items-center w-full px-4 py-2 text-sm font-medium text-red-600 hover:bg-red-50 rounded-lg transition-colors"
@@ -138,6 +149,14 @@ export const Layout = ({ children }: LayoutProps) => {
         {/* Page content */}
         <main className="p-4 lg:p-8">{children}</main>
       </div>
+
+      {/* Change Password Modal */}
+      <ChangePasswordModal
+        isOpen={changePasswordModalOpen}
+        onClose={() => setChangePasswordModalOpen(false)}
+        onPasswordChanged={handlePasswordChange}
+        userName={user?.name || ''}
+      />
     </div>
   );
 };

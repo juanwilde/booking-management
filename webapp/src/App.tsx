@@ -7,6 +7,7 @@ import { Dashboard } from './pages/Dashboard';
 import { Bookings } from './pages/Bookings';
 import { Expenses } from './pages/Expenses';
 import { Reminders } from './pages/Reminders';
+import { Users } from './pages/Users';
 import { UserRole } from './types';
 
 interface RouteWrapperProps {
@@ -107,6 +108,14 @@ function AppRoutes() {
         element={
           <ProtectedRoute allowedRoles={['admin']}>
             <Reminders />
+          </ProtectedRoute>
+        }
+      />
+      <Route
+        path="/users"
+        element={
+          <ProtectedRoute allowedRoles={['admin']}>
+            <Users />
           </ProtectedRoute>
         }
       />

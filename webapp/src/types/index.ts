@@ -59,6 +59,13 @@ export interface PaymentReminder {
 }
 
 // Dashboard Stats
+export interface PropertyMetrics {
+  propertyName: string;
+  income: number;
+  expenses: number;
+  profit: number;
+}
+
 export interface DashboardStats {
   totalRevenue: number;
   netIncome: number;
@@ -68,6 +75,7 @@ export interface DashboardStats {
   pendingPayments: number;
   occupancyRate: number;
   totalBookings: number;
+  propertyMetrics: PropertyMetrics[];
 }
 
 // API Response Types
@@ -83,6 +91,15 @@ export interface User {
   email: string;
   name: string;
   role: UserRole;
+}
+
+export interface Manager {
+  id: string;
+  email: string;
+  name: string;
+  role: 'manager';
+  password?: string; // Only used when creating/updating
+  createdAt?: string;
 }
 
 export interface AuthContextType {

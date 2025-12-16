@@ -1,8 +1,9 @@
-import { mockBookings, mockExpenses, mockReminders, calculateStats } from './mockData';
-import { Booking, Expense, ApiResponse, DashboardStats, BookingStatus, PaymentStatus, ExpenseCategory, ExpenseStatus } from '../types';
+import { format } from 'date-fns';
+import { mockBookings, mockExpenses, mockReminders, mockManagers, calculateStats } from './mockData';
+import { Booking, Expense, Manager, ApiResponse, DashboardStats, BookingStatus, PaymentStatus, ExpenseCategory, ExpenseStatus } from '../types';
 
 // Simulate API delay
-const delay = (ms = 500): Promise<void> => new Promise(resolve => setTimeout(resolve, ms));
+const delay = (ms = 50): Promise<void> => new Promise(resolve => setTimeout(resolve, ms));
 
 interface BookingFilters {
   status?: BookingStatus;
@@ -142,9 +143,82 @@ export const remindersAPI = {
 };
 
 // Dashboard/Stats API
+interface DashboardFilters {
+  propertyName?: string;
+  startDate?: string;
+  endDate?: string;
+}
+
 export const dashboardAPI = {
-  getStats: async (): Promise<DashboardStats> => {
+  getStats: async (filters?: DashboardFilters): Promise<DashboardStats> => {
     await delay();
-    return calculateStats();
+    return calculateStats(filters);
+  },
+};
+
+// Users/Managers API
+export const usersAPI = {
+  getAll: async (): Promise<ApiResponse<Manager[]>> => {
+    await delay();
+    // Return managers without passwords
+    const managersWithoutPasswords = mockManagers.map(({ password, ...manager }) => manager);
+    return { data: managersWithoutPasswords as Manager[] };
+  },
+
+  getById: async (id: string): Promise<Manager> => {
+    await delay();
+    const manager = mockManagers.find(m => m.id === id);
+    if (!manager) throw new Error('Manager not found');
+    const { password, ...managerWithoutPassword } = manager;
+    return managerWithoutPassword as Manager;
+  },
+
+  create: async (managerData: Omit<Manager, 'id' | 'createdAt'>): Promise<Manager> => {
+    await delay();
+    const newManager: Manager = {
+      id: Date.now().toString(),
+      ...managerData,
+      role: 'manager',
+      createdAt: format(new Date(), 'yyyy-MM-dd'),
+    };
+    mockManagers.push(newManager);
+    const { password, ...managerWithoutPassword } = newManager;
+    return managerWithoutPassword as Manager;
+  },
+
+  update: async (id: string, managerData: Partial<Manager>): Promise<Manager> => {
+    await delay();
+    const index = mockManagers.findIndex(m => m.id === id);
+    if (index === -1) throw new Error('Manager not found');
+    const updatedManager = { ...mockManagers[index], ...managerData } as Manager;
+    mockManagers[index] = updatedManager;
+    const { password, ...managerWithoutPassword } = updatedManager;
+    return managerWithoutPassword as Manager;
+  },
+
+  delete: async (id: string): Promise<{ success: boolean }> => {
+    await delay();
+    const index = mockManagers.findIndex(m => m.id === id);
+    if (index === -1) throw new Error('Manager not found');
+    mockManagers.splice(index, 1);
+    return { success: true };
+  },
+
+  changePassword: async (email: string, currentPassword: string, newPassword: string): Promise<{ success: boolean }> => {
+    await delay();
+
+    // Check both admin (in AuthContext mockUsers) and managers
+    const manager = mockManagers.find(m => m.email === email);
+
+    if (manager) {
+      if (manager.password !== currentPassword) {
+        throw new Error('Current password is incorrect');
+      }
+      manager.password = newPassword;
+      return { success: true };
+    }
+
+    // If not a manager, might be admin - handle in AuthContext
+    throw new Error('User not found');
   },
 };

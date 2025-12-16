@@ -6,8 +6,12 @@ import {
   Calendar,
   Users,
   AlertCircle,
+  RotateCcw,
 } from 'lucide-react';
 import { StatCard } from '../components/common/Card';
+import { Input, Select } from '../components/common/Input';
+import { Button } from '../components/common/Button';
+import { PropertyMetrics } from '../components/PropertyMetrics';
 import { dashboardAPI, bookingsAPI } from '../services/api';
 import { translatePaymentStatus, formatDate } from '../utils/translations';
 import { DashboardStats, Booking } from '../types';
@@ -16,16 +20,31 @@ export const Dashboard = () => {
   const [stats, setStats] = useState<DashboardStats | null>(null);
   const [upcomingBookings, setUpcomingBookings] = useState<Booking[]>([]);
   const [loading, setLoading] = useState(true);
+  const [propertyFilter, setPropertyFilter] = useState('');
+  const [startDate, setStartDate] = useState('');
+  const [endDate, setEndDate] = useState('');
 
   useEffect(() => {
     loadDashboardData();
-  }, []);
+  }, [propertyFilter, startDate, endDate]);
+
+  const handleResetFilters = () => {
+    setPropertyFilter('');
+    setStartDate('');
+    setEndDate('');
+  };
 
   const loadDashboardData = async () => {
     setLoading(true);
     try {
+      const filters = {
+        ...(propertyFilter && { propertyName: propertyFilter }),
+        ...(startDate && { startDate }),
+        ...(endDate && { endDate }),
+      };
+
       const [statsData, bookingsData] = await Promise.all([
-        dashboardAPI.getStats(),
+        dashboardAPI.getStats(filters),
         bookingsAPI.getAll({ status: 'confirmed' }),
       ]);
 
@@ -68,6 +87,49 @@ export const Dashboard = () => {
         <p className="text-gray-600 mt-1">Vista general de tus operaciones de reserva</p>
       </div>
 
+      {/* Filters */}
+      <div className="bg-white rounded-lg shadow-md p-4">
+        <div className="flex flex-col md:flex-row gap-4">
+          <div className="grid grid-cols-1 md:grid-cols-3 gap-4 flex-1">
+            <Select
+              label="Propiedad"
+              value={propertyFilter}
+              onChange={e => setPropertyFilter(e.target.value)}
+            >
+              <option value="">Todas las Propiedades</option>
+              <option value="Caiño">Caiño</option>
+              <option value="Loureira">Loureira</option>
+              <option value="Treixadura">Treixadura</option>
+            </Select>
+
+            <Input
+              label="Fecha Desde"
+              type="date"
+              value={startDate}
+              onChange={e => setStartDate(e.target.value)}
+            />
+
+            <Input
+              label="Fecha Hasta"
+              type="date"
+              value={endDate}
+              onChange={e => setEndDate(e.target.value)}
+            />
+          </div>
+
+          <div className="flex items-end">
+            <Button
+              variant="secondary"
+              onClick={handleResetFilters}
+              className="px-3 py-2.5"
+              title="Resetear Filtros"
+            >
+              <RotateCcw className="w-4 h-4" />
+            </Button>
+          </div>
+        </div>
+      </div>
+
       {/* Stats Grid */}
       <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-6">
         <StatCard
@@ -96,52 +158,50 @@ export const Dashboard = () => {
         />
       </div>
 
-      {/* Additional Stats */}
-      <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
-        {/* Occupancy Rate */}
+      {/* Quick Stats */}
+      <div className="grid grid-cols-1 md:grid-cols-3 gap-6">
         <div className="bg-white rounded-lg shadow-md p-6">
-          <h3 className="text-lg font-semibold text-gray-900 mb-4">
-            Tasa de Ocupación
-          </h3>
-          <div className="flex items-end space-x-2">
-            <span className="text-4xl font-bold text-blue-600">
-              {stats.occupancyRate}%
-            </span>
-            <span className="text-gray-600 mb-2">este mes</span>
-          </div>
-          <div className="mt-4 bg-gray-200 rounded-full h-2">
-            <div
-              className="bg-blue-600 h-2 rounded-full"
-              style={{ width: `${stats.occupancyRate}%` }}
-            />
-          </div>
+          <p className="text-sm font-medium text-gray-600 mb-2">Reservas Totales</p>
+          <p className="text-3xl font-bold text-gray-900">
+            {stats.totalBookings}
+          </p>
         </div>
-
-        {/* Quick Stats */}
         <div className="bg-white rounded-lg shadow-md p-6">
-          <h3 className="text-lg font-semibold text-gray-900 mb-4">
-            Estadísticas Rápidas
-          </h3>
-          <div className="space-y-3">
-            <div className="flex justify-between items-center">
-              <span className="text-gray-600">Reservas Totales</span>
-              <span className="font-semibold text-gray-900">
-                {stats.totalBookings}
-              </span>
-            </div>
-            <div className="flex justify-between items-center">
-              <span className="text-gray-600">Reservas Activas</span>
-              <span className="font-semibold text-gray-900">
-                {stats.activeBookings}
-              </span>
-            </div>
-            <div className="flex justify-between items-center">
-              <span className="text-gray-600">Valor Promedio de Reserva</span>
-              <span className="font-semibold text-gray-900">
-                €{Math.round(stats.totalRevenue / stats.totalBookings)}
-              </span>
-            </div>
-          </div>
+          <p className="text-sm font-medium text-gray-600 mb-2">Reservas Activas</p>
+          <p className="text-3xl font-bold text-gray-900">
+            {stats.activeBookings}
+          </p>
+        </div>
+        <div className="bg-white rounded-lg shadow-md p-6">
+          <p className="text-sm font-medium text-gray-600 mb-2">Valor Promedio de Reserva</p>
+          <p className="text-3xl font-bold text-gray-900">
+            €{stats.totalBookings > 0 ? Math.round(stats.totalRevenue / stats.totalBookings) : 0}
+          </p>
+        </div>
+      </div>
+
+      {/* Property Metrics */}
+      <PropertyMetrics metrics={stats.propertyMetrics} />
+
+      {/* Separator */}
+      <div className="border-t-2 border-gray-300 my-8"></div>
+
+      {/* Occupancy Rate - Full Width */}
+      <div className="bg-white rounded-lg shadow-md p-6">
+        <h3 className="text-lg font-semibold text-gray-900 mb-4">
+          Tasa de Ocupación
+        </h3>
+        <div className="flex items-end space-x-2 mb-4">
+          <span className="text-4xl font-bold text-blue-600">
+            {stats.occupancyRate}%
+          </span>
+          <span className="text-gray-600 mb-2">este mes</span>
+        </div>
+        <div className="bg-gray-200 rounded-full h-3">
+          <div
+            className="bg-blue-600 h-3 rounded-full transition-all duration-300"
+            style={{ width: `${stats.occupancyRate}%` }}
+          />
         </div>
       </div>
 
